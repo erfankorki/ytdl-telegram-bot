@@ -1,14 +1,25 @@
-import dotenv from "dotenv";
-import TelegramBot from "node-telegram-bot-api";
-import YoutubeDownloader from "ytdl-core";
+import fs from "fs";
+import ytdl from "ytdl-core";
+import inquirer from "inquirer";
 
-(function main() {
-  dotenv.config();
-  const token = String.raw`${process.env.API_TOKEN}`;
-  const bot = new TelegramBot(token, { polling: true });
+async function getURL() {
+  const answers = await inquirer.prompt([
+    {
+      type: "text",
+      name: "url",
+      message: "please enter youtube URL",
+    },
+  ]);
+  return answers.url;
+}
 
-  bot.on("message", (message) => {
-    const chatId = message.chat.id;
-    bot.sendMessage(chatId, "Received your message");
-  });
+(async function main() {
+  const url = await getURL();
+  const info = await ytdl.getInfo(url, {});
+  ytdl
+    .downloadFromInfo(info, {})
+    .pipe(fs.createWriteStream("video.mp4"))
+    .on("finish", function () {
+      console.log("File Downloaded...");
+    });
 })();
